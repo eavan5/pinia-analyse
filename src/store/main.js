@@ -5,12 +5,12 @@ export const useMainStore = defineStore('main', {
 		count: 0,
 	}),
 	getters: {
-		dobule() {
+		double() {
 			return this.count * 2
 		},
 	},
 	actions: {
-		increment(payload) {
+		increase(payload) {
 			this.count += payload
 		},
 		decrement(payload) {

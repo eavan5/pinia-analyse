@@ -1,19 +1,29 @@
-import { getCurrentInstance, inject, effectScope } from 'vue'
+import { getCurrentInstance, inject, effectScope, reactive, computed, toRefs } from 'vue'
 import { symbolPinia } from './consts'
 // state 管理store中的state
 // _s store和对应着id的映射表
 // _e 用来停止effect
 
 function createOptionsStore(id, options, pinia) {
-	let { state } = options
+	let { state, actions, getters } = options
 	let scope
 	function setup() {
 		// 后面要实现计算属性等
 
 		pinia.state.value[id] = state ? state() : {}
 
-		const localState = pinia.state.value[id]
-		return localState
+		const localState = toRefs(pinia.state.value[id]) // 不加toRefs会丧失响应式，Object.assign会拆包合并
+		return Object.assign(
+			localState,
+			actions,
+			Object.keys(getters || {}).reduce((memo, key) => {
+				memo[key] = computed(() => {
+					// computed有缓存 所以用这个
+					return getters[key].call(store, store)
+				})
+				return memo
+			}, {})
+		)
 	}
 
 	// 全局可以关闭所有的store,让他停止,自己也有一个scope,可以停止自己
@@ -21,7 +31,25 @@ function createOptionsStore(id, options, pinia) {
 		scope = effectScope()
 		return scope.run(() => setup())
 	})
-	pinia._s.set(id, setupStore)
+
+	const store = reactive({}) // 这里面可以扩展自己的方法
+
+	pinia._s.set(id, store) // 塞入全局
+
+	function wrapActions(actions) {
+		return function (...args) {
+			return actions.call(store, ...args)
+		}
+	}
+
+	for (const key in setupStore) {
+		//这里会触发计算属性取值
+		const v = setupStore[key]
+		if (typeof v === 'function') {
+			setupStore[key] = wrapActions(v)
+		}
+	}
+	Object.assign(store, setupStore) //这里会触发计算属性取值
 }
 
 export function defineStore(idOrOptions, setup) {
@@ -45,7 +73,7 @@ export function defineStore(idOrOptions, setup) {
 			// 将标识和选项放到pinia中
 			createOptionsStore(id, options, pinia)
 		}
-		const store = pinia._s.get(id)
+		const store = pinia._s.get(id) // 从全局拿到
 		return store
 	}
 	return useStore
