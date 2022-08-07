@@ -37,9 +37,14 @@ function createSetupStore(id, setup, pinia) {
 		}
 	}
 
-	const actionSubscribers = []
+	let actionSubscribers = []
 	const store = reactive({
 		$patch,
+		$dispose() {
+			scope.stop()
+			actionSubscribers = []
+			pinia._s.delete(id)
+		},
 		$subscribe(callback, options = {}) {
 			scope.run(() => {
 				watch(
