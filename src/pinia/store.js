@@ -4,6 +4,22 @@ import { symbolPinia } from './consts'
 // _s store和对应着id的映射表
 // _e 用来停止effect
 
+function isObject(obj) {
+	return obj !== null && typeof obj === 'object'
+}
+
+function merge(target, state) {
+	for (const key in state) {
+		let oldValue = target[key]
+		let newValue = state[key]
+		if (isObject(oldValue) && isObject(newValue)) {
+			target[key] = merge(oldValue, newValue)
+		} else {
+			target[key] = newValue
+		}
+	}
+}
+
 function createSetupStore(id, setup, pinia) {
 	let scope
 	// 全局可以关闭所有的store,让他停止,自己也有一个scope,可以停止自己
@@ -11,7 +27,16 @@ function createSetupStore(id, setup, pinia) {
 		scope = effectScope()
 		return scope.run(() => setup())
 	})
-	const store = reactive({}) // 这里面可以扩展自己的方法
+	function $patch(partialStateOrMutator) {
+		if (typeof partialStateOrMutator === 'function') {
+			partialStateOrMutator(pinia.state.value[id])
+		} else {
+			merge(pinia.state.value[id], partialStateOrMutator)
+		}
+	}
+	const store = reactive({
+		$patch,
+	}) // 这里面可以扩展自己的方法
 	pinia._s.set(id, store) // 塞入全局
 
 	function wrapActions(actions) {

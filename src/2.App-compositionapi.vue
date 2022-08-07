@@ -13,21 +13,13 @@ const { increase } = mainStore
   <div>
     {{ mainStore.count }}
     <button @click="mainStore.count++">count++</button>
-    <button @click="mainStore.$patch({
-      count: mainStore.count + 1 //可以给多个属性批量新增
-    })">通过$patch对象 ++</button>
-
-    <button @click="mainStore.$patch((state) => {
-      state.count++
-    })">通过$patch函数 ++</button>
-    <button @click="mainStore.increase(5)">通过store ++</button>
+    <button @click="mainStore.increase(5)">通过action ++</button>
     <button @click="increase(5)">increase解决this ++</button>
     <div>计算属性：{{ mainStore.double }}</div>
   </div>
 
   <br />
   <button @click="userStore.changeAge(5)">changeAge 5 ++</button>
-
   {{ userStore.age }} {{ userStore.doubleAge }}
 
 </template>
