@@ -1,20 +1,27 @@
 <script setup>
 import { useMainStore } from './store/main';
-const store = useMainStore()
-const { increase } = store
-console.log(store);
-// const store = useMainStore()
-// const store = useMainStore()
+import { useUserStore } from './store/user';
+
+const mainStore = useMainStore()
+console.log(mainStore);
+const userStore = useUserStore()
+const { increase } = mainStore
+
 </script>
 
 <template>
   <div>
-    {{ store.count }}
-    <button @click="store.count++">count++</button>
-    <button @click="store.increase(5)">通过action ++</button>
+    {{ mainStore.count }}
+    <button @click="mainStore.count++">count++</button>
+    <button @click="mainStore.increase(5)">通过action ++</button>
     <button @click="increase(5)">increase解决this ++</button>
-    <div>计算属性：{{ store.double }}</div>
+    <div>计算属性：{{ mainStore.double }}</div>
   </div>
+
+  <br />
+  <button @click="userStore.changeAge(5)">changeAge 5 ++</button>
+  {{ userStore.age }} {{ userStore.doubleAge }}
+
 </template>
 
 <style scoped>
