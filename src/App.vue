@@ -23,6 +23,8 @@ const { increase } = mainStore
     <button @click="mainStore.increase(5)">通过store ++</button>
     <button @click="increase(5)">increase解决this ++</button>
     <div>计算属性：{{ mainStore.double }}</div>
+
+    <button @click="mainStore.$reset()">$reset重置</button>
   </div>
 
   <br />

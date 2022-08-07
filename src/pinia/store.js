@@ -53,7 +53,7 @@ function createSetupStore(id, setup, pinia) {
 			setupStore[key] = wrapActions(v)
 		}
 	}
-	Object.assign(store, setupStore)
+	return Object.assign(store, setupStore)
 }
 
 function createOptionsStore(id, options, pinia) {
@@ -77,7 +77,13 @@ function createOptionsStore(id, options, pinia) {
 			}, {})
 		)
 	}
-	createSetupStore(id, setup, pinia)
+	const store = createSetupStore(id, setup, pinia)
+	store.$reset = function () {
+		const newState = state ? state() : {}
+		store.$patch(state => {
+			Object.assign(state, newState)
+		})
+	}
 }
 
 export function defineStore(idOrOptions, setup) {
