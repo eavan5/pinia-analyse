@@ -1,4 +1,15 @@
-import { getCurrentInstance, inject, effectScope, reactive, computed, toRefs, watch } from 'vue'
+import {
+	getCurrentInstance,
+	inject,
+	effectScope,
+	reactive,
+	computed,
+	toRefs,
+	watch,
+	isReactive,
+	isRef,
+	isReadonly,
+} from 'vue'
 import { symbolPinia } from './consts'
 import { addSubscription, triggerSubscriptions } from './subscriptions'
 // state 管理store中的state
@@ -93,9 +104,14 @@ function createSetupStore(id, setup, pinia) {
 		}
 	}
 
+	const state = {}
 	for (const key in setupStore) {
 		//这里会触发计算属性取值
 		const v = setupStore[key]
+		if ((isRef(v) || isReactive(v)) && !isReadonly(v)) {
+			// 过滤掉计算属性（计算属性不能存）
+			state[key] = v
+		}
 		if (typeof v === 'function') {
 			// 将actions挂载到store上
 			setupStore[key] = wrapActions(v)
@@ -105,7 +121,7 @@ function createSetupStore(id, setup, pinia) {
 	Object.assign(store, setupStore)
 
 	if (!pinia.state.value[id]) {
-		pinia.state.value[id] = {} // compositionApi必须要又个空值
+		pinia.state.value[id] = state // compositionApi必须要又个空值
 	}
 
 	Object.defineProperty(store, '$state', {
@@ -120,6 +136,11 @@ function createSetupStore(id, setup, pinia) {
 	// if (!store.$state) {
 	// 	pinia.state.value[id] = setupStore
 	// }
+
+	store.id = id
+	pinia._p.forEach(plugin => {
+		scope.run(() => plugin(store))
+	})
 
 	return store
 }
