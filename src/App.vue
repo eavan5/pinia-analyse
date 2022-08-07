@@ -40,6 +40,7 @@ mainStore.$onAction(({ after, onError }) => { // 类似watch
     <div>计算属性：{{ mainStore.double }}</div>
 
     <button @click="mainStore.$reset()">$reset重置</button>
+    <button @click="mainStore.$state = { count: 0 }">$state修改</button>
   </div>
 
   <br />

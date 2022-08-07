@@ -101,7 +101,27 @@ function createSetupStore(id, setup, pinia) {
 			setupStore[key] = wrapActions(v)
 		}
 	}
-	return Object.assign(store, setupStore)
+
+	Object.assign(store, setupStore)
+
+	if (!pinia.state.value[id]) {
+		pinia.state.value[id] = {} // compositionApi必须要又个空值
+	}
+
+	Object.defineProperty(store, '$state', {
+		get() {
+			return pinia.state.value[id]
+		},
+		set(state) {
+			$patch($state => Object.assign($state, state))
+		},
+	})
+
+	// if (!store.$state) {
+	// 	pinia.state.value[id] = setupStore
+	// }
+
+	return store
 }
 
 function createOptionsStore(id, options, pinia) {
