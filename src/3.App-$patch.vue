@@ -7,11 +7,6 @@ console.log(mainStore);
 const userStore = useUserStore()
 const { increase } = mainStore
 
-mainStore.$subscribe((state) => { // 类似watch
-  console.log(state);
-  console.log('userStore changed,subscribe');
-})
-
 </script>
 
 <template>

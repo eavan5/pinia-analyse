@@ -1,4 +1,4 @@
-import { getCurrentInstance, inject, effectScope, reactive, computed, toRefs } from 'vue'
+import { getCurrentInstance, inject, effectScope, reactive, computed, toRefs, watch } from 'vue'
 import { symbolPinia } from './consts'
 // state 管理store中的state
 // _s store和对应着id的映射表
@@ -27,6 +27,7 @@ function createSetupStore(id, setup, pinia) {
 		scope = effectScope()
 		return scope.run(() => setup())
 	})
+
 	function $patch(partialStateOrMutator) {
 		if (typeof partialStateOrMutator === 'function') {
 			partialStateOrMutator(pinia.state.value[id])
@@ -36,6 +37,17 @@ function createSetupStore(id, setup, pinia) {
 	}
 	const store = reactive({
 		$patch,
+		$subscribe(callback, options = {}) {
+			scope.run(() => {
+				watch(
+					pinia.state.value[id],
+					state => {
+						callback(state)
+					},
+					options
+				)
+			})
+		},
 	}) // 这里面可以扩展自己的方法
 	pinia._s.set(id, store) // 塞入全局
 
