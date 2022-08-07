@@ -12,16 +12,6 @@ mainStore.$subscribe((state) => { // 类似watch
   console.log('userStore changed,subscribe');
 })
 
-mainStore.$onAction(({ after, onError }) => { // 类似watch
-  after(resolve => {
-    console.log('成功')
-  });
-  onError(error => {
-    console.log('错误')
-
-  })
-})
-
 </script>
 
 <template>

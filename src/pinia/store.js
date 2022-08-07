@@ -1,5 +1,6 @@
 import { getCurrentInstance, inject, effectScope, reactive, computed, toRefs, watch } from 'vue'
 import { symbolPinia } from './consts'
+import { addSubscription, triggerSubscriptions } from './subscriptions'
 // state 管理store中的state
 // _s store和对应着id的映射表
 // _e 用来停止effect
@@ -35,6 +36,8 @@ function createSetupStore(id, setup, pinia) {
 			merge(pinia.state.value[id], partialStateOrMutator)
 		}
 	}
+
+	const actionSubscribers = []
 	const store = reactive({
 		$patch,
 		$subscribe(callback, options = {}) {
@@ -48,12 +51,40 @@ function createSetupStore(id, setup, pinia) {
 				)
 			})
 		},
+		$onAction: addSubscription.bind(null, actionSubscribers), // 绑定数组和用户的回调
 	}) // 这里面可以扩展自己的方法
 	pinia._s.set(id, store) // 塞入全局
 
 	function wrapActions(actions) {
 		return function (...args) {
-			return actions.call(store, ...args)
+			let afterList = []
+			let errorList = []
+			function after(callback) {
+				afterList.push(callback)
+			}
+			function onError(callback) {
+				errorList.push(callback)
+			}
+			triggerSubscriptions(actionSubscribers, { after, onError })
+			let result
+			try {
+				result = actions.call(store, ...args)
+			} catch (e) {
+				triggerSubscriptions(errorList, e)
+			}
+			if (result instanceof Promise) {
+				return result
+					.then(res => {
+						triggerSubscriptions(afterList, res)
+					})
+					.catch(e => {
+						triggerSubscriptions(errorList, e)
+						return Promise.reject(e)
+					})
+			}
+			// 支持同步和异步
+			triggerSubscriptions(afterList, result)
+			return result
 		}
 	}
 

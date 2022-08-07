@@ -6,6 +6,7 @@ export function addSubscription(subscription, callback) {
 			subscription.splice(index, 1)
 		}
 	}
+	console.log(subscription)
 	return removeSubscription
 }
 
